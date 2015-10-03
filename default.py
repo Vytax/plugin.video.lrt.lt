@@ -62,15 +62,84 @@ def build_main_directory():
     u['title'] = url['name']
     xbmcplugin.addDirectoryItem(handle = int(sys.argv[1]), url = sys.argv[0] + '?' + urllib.urlencode(u), listitem = listitem, isFolder = False, totalItems = 0)
   
+  listitem = xbmcgui.ListItem("[ Mediateka ]")
+  listitem.setProperty('IsPlayable', 'false')
+  xbmcplugin.addDirectoryItem(handle = int(sys.argv[1]), url = sys.argv[0] + '?mode=2', listitem = listitem, isFolder = True, totalItems = 0)
+  
   xbmcplugin.setContent(int( sys.argv[1] ), 'tvshows')
   xbmc.executebuiltin('Container.SetViewMode(515)')
   xbmcplugin.endOfDirectory(int(sys.argv[1]))
+
+def build_mediateka_directory():
+  listitem = xbmcgui.ListItem("Naujienų reportažai")
+  listitem.setProperty('IsPlayable', 'false')
+  xbmcplugin.addDirectoryItem(handle = int(sys.argv[1]), url = sys.argv[0] + '?mode=3', listitem = listitem, isFolder = True, totalItems = 0)
   
+  listitem = xbmcgui.ListItem("Naujausi įrašai")
+  listitem.setProperty('IsPlayable', 'false')
+  xbmcplugin.addDirectoryItem(handle = int(sys.argv[1]), url = sys.argv[0] + '?mode=4', listitem = listitem, isFolder = True, totalItems = 0)
+  
+  listitem = xbmcgui.ListItem("Populiariausi įrašai")
+  listitem.setProperty('IsPlayable', 'false')
+  xbmcplugin.addDirectoryItem(handle = int(sys.argv[1]), url = sys.argv[0] + '?mode=5', listitem = listitem, isFolder = True, totalItems = 0)
+  
+  xbmcplugin.setContent(int( sys.argv[1] ), 'tvshows')
+  xbmc.executebuiltin('Container.SetViewMode(515)')
+  xbmcplugin.endOfDirectory(int(sys.argv[1]))
+
+def build_media_list(mode):
+  
+  data = {}
+  
+  if mode == 3:
+    data = lrt.getLatestNews() 
+  elif mode == 4:
+    data = lrt.getLatestVideos()
+  elif mode == 5:
+    data = lrt.getPopularVideos()
+    
+  if data:
+    tvList = data['data']
+    
+    for tv in tvList:
+      listitem = xbmcgui.ListItem(tv['title'])
+      listitem.setProperty('IsPlayable', 'true')
+      
+      info = { 'title': tv['title'], 'plot': tv['plot'], 'genre': tv['genre'] }
+      
+      if 'aired' in tv:
+        info['aired'] = tv['aired']
+
+      if 'duration' in tv:	
+	if tv['duration']:
+	  if hasattr(listitem, 'addStreamInfo'):
+	    listitem.addStreamInfo('video', { 'duration': tv['duration'] })
+	  else:
+	    info['duration'] = tv['duration']          
+  
+      listitem.setInfo(type = 'video', infoLabels = info )
+      
+      listitem.setThumbnailImage(tv['thumbnailURL'])
+      
+      u = {}
+      u['mode'] = 1
+      u['url'] = tv['url']
+      u['title'] = tv['title']
+      
+      xbmcplugin.addDirectoryItem(handle = int(sys.argv[1]), url = sys.argv[0] + '?' + urllib.urlencode(u), listitem = listitem, isFolder = False, totalItems = 0)
+    
+  
+  xbmcplugin.setContent(int( sys.argv[1] ), 'tvshows')
+  xbmc.executebuiltin('Container.SetViewMode(503)')
+  xbmcplugin.endOfDirectory(int(sys.argv[1]))
+
 def playVideo(url, title):
   
   u = lrt.getVideoStreamURL(url)
   
   if not u:
+    dialog = xbmcgui.Dialog()
+    ok = dialog.ok( "LRT" , 'Nepavyko paleisti vaizdo įrašo!' )
     return
     
   listitem = xbmcgui.ListItem(label = title)
@@ -102,11 +171,11 @@ try:
 except:
 	pass
 
-print path
-print params
-print mode
-  
 if mode == None:
   build_main_directory()
 elif mode == 1:
   playVideo(url, title)
+elif mode == 2:
+  build_mediateka_directory()
+elif mode in [3, 4, 5]:
+  build_media_list(mode)
