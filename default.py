@@ -83,11 +83,15 @@ def build_mediateka_directory():
   listitem.setProperty('IsPlayable', 'false')
   xbmcplugin.addDirectoryItem(handle = int(sys.argv[1]), url = sys.argv[0] + '?mode=5', listitem = listitem, isFolder = True, totalItems = 0)
   
+  listitem = xbmcgui.ListItem("Laidos")
+  listitem.setProperty('IsPlayable', 'false')
+  xbmcplugin.addDirectoryItem(handle = int(sys.argv[1]), url = sys.argv[0] + '?mode=6', listitem = listitem, isFolder = True, totalItems = 0)
+  
   xbmcplugin.setContent(int( sys.argv[1] ), 'tvshows')
   xbmc.executebuiltin('Container.SetViewMode(515)')
   xbmcplugin.endOfDirectory(int(sys.argv[1]))
 
-def build_media_list(mode):
+def build_media_list(mode, mediaId = 0):
   
   data = {}
   
@@ -97,6 +101,8 @@ def build_media_list(mode):
     data = lrt.getLatestVideos()
   elif mode == 5:
     data = lrt.getPopularVideos()
+  elif mode == 7:
+    data = lrt.getTVShowVideos(mediaId)
     
   if data:
     tvList = data['data']
@@ -133,6 +139,19 @@ def build_media_list(mode):
   xbmc.executebuiltin('Container.SetViewMode(503)')
   xbmcplugin.endOfDirectory(int(sys.argv[1]))
 
+def build_tv_shows_list():
+  
+  tvList = lrt.getTVShowsList()
+  
+  for tv in tvList:
+    listitem = xbmcgui.ListItem(tv['title'])
+    listitem.setProperty('IsPlayable', 'false')
+    xbmcplugin.addDirectoryItem(handle = int(sys.argv[1]), url = sys.argv[0] + '?mode=7&mediaId=' + tv['id'], listitem = listitem, isFolder = True, totalItems = 0)
+    
+  xbmcplugin.setContent(int( sys.argv[1] ), 'tvshows')
+  xbmc.executebuiltin('Container.SetViewMode(515)')
+  xbmcplugin.endOfDirectory(int(sys.argv[1]))
+
 def playVideo(url, title):
   
   u = lrt.getVideoStreamURL(url)
@@ -155,6 +174,7 @@ params = getParameters(sys.argv[2])
 mode = None
 url = None
 title = None
+mediaId = None
 
 try:
 	url = urllib.unquote_plus(params["url"])
@@ -171,6 +191,11 @@ try:
 except:
 	pass
 
+try:
+	mediaId = int(params["mediaId"])
+except:
+	pass
+
 if mode == None:
   build_main_directory()
 elif mode == 1:
@@ -179,3 +204,8 @@ elif mode == 2:
   build_mediateka_directory()
 elif mode in [3, 4, 5]:
   build_media_list(mode)
+elif mode == 6:
+  build_tv_shows_list()
+elif mode == 7:
+  build_media_list(mode, mediaId)
+  
