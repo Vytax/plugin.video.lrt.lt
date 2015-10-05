@@ -12,7 +12,8 @@ VIDEOS_COUNT_PER_PAGE = 100
 LATEST_NEWS_URL = LRT_URL + 'data-service/module/mediaNews/callback/top_media/limit/' + str(VIDEOS_COUNT_PER_PAGE)
 LATEST_VIDEOS_URL = LRT_URL + 'data-service/module/media/callback/latest_media/order/dateZ/limit/' + str(VIDEOS_COUNT_PER_PAGE)
 POPULAR_VIDEOS_URL = LRT_URL + 'data-service/module/media/callback/popular_media/order/viewsZ/date/7/limit/' + str(VIDEOS_COUNT_PER_PAGE)
-TVSHOW_VIDEOS_URL = LRT_URL + 'data-service//module/media/callback/popular_media/program/%d/limit/' + str(VIDEOS_COUNT_PER_PAGE)
+TVSHOW_VIDEOS_URL = LRT_URL + 'data-service/module/media/callback/popular_media/program/%d/limit/' + str(VIDEOS_COUNT_PER_PAGE)
+SEARCH_VIDEOS_URL = LRT_URL + 'data-service/module/media/callback/popular_media/order/dateZ/content/%s/limit/' + str(VIDEOS_COUNT_PER_PAGE)
 
 reload(sys) 
 sys.setdefaultencoding('utf8')
@@ -167,6 +168,11 @@ def getPopularVideos():
 def getTVShowVideos(mediaId):
   
   json = getLRTJSON(TVSHOW_VIDEOS_URL % mediaId)  
+  return parseStandartJSON(json)
+
+def getSearchVideos(key):
+
+  json = getLRTJSON(SEARCH_VIDEOS_URL % urllib.quote(key.encode("utf-8")))
   return parseStandartJSON(json)
 
 def parseStandartJSON(json):

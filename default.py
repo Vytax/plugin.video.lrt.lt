@@ -87,6 +87,10 @@ def build_mediateka_directory():
   listitem.setProperty('IsPlayable', 'false')
   xbmcplugin.addDirectoryItem(handle = int(sys.argv[1]), url = sys.argv[0] + '?mode=6', listitem = listitem, isFolder = True, totalItems = 0)
   
+  listitem = xbmcgui.ListItem("Paieška")
+  listitem.setProperty('IsPlayable', 'false')
+  xbmcplugin.addDirectoryItem(handle = int(sys.argv[1]), url = sys.argv[0] + '?mode=8', listitem = listitem, isFolder = True, totalItems = 0)
+  
   xbmcplugin.setContent(int( sys.argv[1] ), 'tvshows')
   xbmc.executebuiltin('Container.SetViewMode(515)')
   xbmcplugin.endOfDirectory(int(sys.argv[1]))
@@ -103,6 +107,10 @@ def build_media_list(mode, mediaId = 0):
     data = lrt.getPopularVideos()
   elif mode == 7:
     data = lrt.getTVShowVideos(mediaId)
+  elif mode == 8:
+    dialog = xbmcgui.Dialog()
+    searchKey = dialog.input('Vaizdo įrašo paieška', type=xbmcgui.INPUT_ALPHANUM)
+    data = lrt.getSearchVideos(searchKey)
     
   if data:
     tvList = data['data']
@@ -202,7 +210,7 @@ elif mode == 1:
   playVideo(url, title)
 elif mode == 2:
   build_mediateka_directory()
-elif mode in [3, 4, 5]:
+elif mode in [3, 4, 5, 8]:
   build_media_list(mode)
 elif mode == 6:
   build_tv_shows_list()
