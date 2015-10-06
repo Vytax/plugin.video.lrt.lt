@@ -12,13 +12,14 @@
         <provides>video</provides>
   </extension>
   <extension point="xbmc.addon.metadata">
-    <summary lang="en">lrt.lt grotuvas</summary>
-    <description lang="en">TEST</description>
+    <summary lang="en">lrt.lt media player</summary>
+    <summary lang="lt">lrt.lt media grotuvas</summary>
+    <description lang="en">Watch content from lrt.lt</description>
+    <description lang="lt">Pamatyk lrt.lt video turinį ir tiesiogines transliacijas</description>
     <platform>all</platform>
-	<language>en</language>
-	<website>https://code.google.com/p/plugin</website>
-	<source>https://github.com/stacked/plugin.video.revision3</source>
-	<forum>http://forum.xbmc.org/showthread.php?tid=42458</forum>
-	<email>stacked.xbmc@gmail.com</email>
+    <language>lt</language>
+    <license>GPLv2</license>
+    <source>https://github.com/Vytax/plugin.video.lrt.lt</source>
+    <email>vmickus@gmail.com</email>
   </extension>
 </addon>
