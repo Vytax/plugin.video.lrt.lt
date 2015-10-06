@@ -1,0 +1,62 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+import sys
+import liblrt as lrt
+
+def test1():
+  print 'getLiveURLs():'  
+  urls = lrt.getLiveURLs()  
+  
+  if not urls:
+    print 'Failed!'
+    
+  for url in urls:
+    print 'Name: ' + url['name']
+    print 'Now Playing: ' + url['nowPlaying']
+    print 'URL: ' + url['url']
+    print 'Type: ' + url['contentType']
+    print '-------'    
+    
+
+def test2():
+  print "getVideoStreamURL()" 
+  urls = lrt.getLiveURLs()  
+  
+  if not urls:
+    print 'Failed!'
+    
+  for url in urls:
+    u = lrt.getVideoStreamURL(url['url'])
+    print "url: " + u['url']
+    print "image: " + u['image']
+    print '-------'   
+
+def test3():
+  print "test3()"
+  print lrt.getLatestNews()
+  
+def test4():
+  print "test4()"
+  print lrt.getVideoStreamURL('http://www.lrt.lt/mediateka/irasas/84760/lrt#wowzaplaystart=695000&wowzaplayduration=187000')
+  print lrt.getVideoStreamURL('http://www.lrt.lt/mediateka/tiesiogiai/lrt-televizija')
+
+def test5():
+  print "test5()"
+  print lrt.getTVShowsList()
+
+if __name__ == '__main__':
+  if len(sys.argv) > 1:
+     
+    n = int(sys.argv[1])
+  
+    if n == 1:
+      test1()
+    elif n == 2:
+      test2()
+    elif n == 3:
+      test3()
+    elif n == 4:
+      test4()
+    elif n == 5:
+      test5()
