@@ -86,7 +86,7 @@ def getVideoStreamURL(url):
   if not source:
     return result  
   
-  source = re.sub('\n[\s]*(\/\/[^\n]*)' ,'' ,source[0], 0, re.DOTALL)
+  source = re.sub(re.compile('\n[\s]*(\/\/[^\n]*)', re.DOTALL), '', source[0])
   
   url_hash = url.split('#', 1)
   if len(url_hash) == 2:
@@ -94,7 +94,7 @@ def getVideoStreamURL(url):
   else:
     url_hash = '';
   
-  source = re.sub('("[\+\s]*location.hash.substring\(1\))', url_hash + '"', source, 0, re.DOTALL)
+  source = re.sub(re.compile('("[\+\s]*location.hash.substring\(1\))', re.DOTALL), url_hash + '"', source)
   source = source.replace('"file"', 'file')      
  
   mfile = re.findall('file[:\s]*"(.*?)"' ,source, re.DOTALL)
