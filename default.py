@@ -95,22 +95,23 @@ def build_mediateka_directory():
   xbmc.executebuiltin('Container.SetViewMode(515)')
   xbmcplugin.endOfDirectory(int(sys.argv[1]))
 
-def build_media_list(mode, mediaId = 0):
+def build_media_list(mode, mediaId, startRow, searchKey):
   
   data = {}
   
   if mode == 3:
-    data = lrt.getLatestNews() 
+    data = lrt.getLatestNews(startRow) 
   elif mode == 4:
-    data = lrt.getLatestVideos()
+    data = lrt.getLatestVideos(startRow)
   elif mode == 5:
-    data = lrt.getPopularVideos()
+    data = lrt.getPopularVideos(startRow)
   elif mode == 7:
-    data = lrt.getTVShowVideos(mediaId)
+    data = lrt.getTVShowVideos(mediaId, startRow)
   elif mode == 8:
-    dialog = xbmcgui.Dialog()
-    searchKey = dialog.input('Vaizdo įrašo paieška', type=xbmcgui.INPUT_ALPHANUM)
-    data = lrt.getSearchVideos(searchKey)
+    if not searchKey:
+      dialog = xbmcgui.Dialog()
+      searchKey = dialog.input('Vaizdo įrašo paieška', type=xbmcgui.INPUT_ALPHANUM)
+    data = lrt.getSearchVideos(searchKey, startRow)
     
   if data:
     tvList = data['data']
@@ -142,6 +143,23 @@ def build_media_list(mode, mediaId = 0):
       
       xbmcplugin.addDirectoryItem(handle = int(sys.argv[1]), url = sys.argv[0] + '?' + urllib.urlencode(u), listitem = listitem, isFolder = False, totalItems = 0)
     
+    page = int(data['startRow'] / lrt.VIDEOS_COUNT_PER_PAGE) + 1
+    pageCount = int( (data['totalRows'] - 1) / lrt.VIDEOS_COUNT_PER_PAGE) + 1
+    
+    if page < pageCount:
+      listitem = xbmcgui.ListItem('[Daugiau...] (%d/%d)' % (page, pageCount))
+      listitem.setProperty('IsPlayable', 'false')
+      u = {}
+      u['mode'] = mode
+      u['startRow'] = startRow + lrt.VIDEOS_COUNT_PER_PAGE
+      
+      if mediaId:
+	u['mediaId'] = mediaId
+	
+      if searchKey:
+	u['searchKey'] = searchKey
+	
+      xbmcplugin.addDirectoryItem(handle = int(sys.argv[1]), url = sys.argv[0] + '?' + urllib.urlencode(u), listitem = listitem, isFolder = True, totalItems = 0)
   
   xbmcplugin.setContent(int( sys.argv[1] ), 'tvshows')
   xbmc.executebuiltin('Container.SetViewMode(503)')
@@ -183,6 +201,8 @@ mode = None
 url = None
 title = None
 mediaId = None
+startRow = 0
+searchKey = None
 
 try:
 	url = urllib.unquote_plus(params["url"])
@@ -203,6 +223,16 @@ try:
 	mediaId = int(params["mediaId"])
 except:
 	pass
+      
+try:
+	startRow = int(params["startRow"])
+except:
+	pass
+      
+try:
+	searchKey = urllib.unquote_plus(params["searchKey"])
+except:
+	pass
 
 if mode == None:
   build_main_directory()
@@ -210,10 +240,8 @@ elif mode == 1:
   playVideo(url, title)
 elif mode == 2:
   build_mediateka_directory()
-elif mode in [3, 4, 5, 8]:
-  build_media_list(mode)
+elif mode in [3, 4, 5, 7, 8]:
+  build_media_list(mode, mediaId, startRow, searchKey)
 elif mode == 6:
   build_tv_shows_list()
-elif mode == 7:
-  build_media_list(mode, mediaId)
   

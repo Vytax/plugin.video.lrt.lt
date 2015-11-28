@@ -9,11 +9,11 @@ import simplejson as json
 
 LRT_URL = 'http://www.lrt.lt/'
 VIDEOS_COUNT_PER_PAGE = 100 
-LATEST_NEWS_URL = LRT_URL + 'data-service/module/mediaNews/callback/top_media/limit/' + str(VIDEOS_COUNT_PER_PAGE)
-LATEST_VIDEOS_URL = LRT_URL + 'data-service/module/media/callback/latest_media/order/dateZ/limit/' + str(VIDEOS_COUNT_PER_PAGE)
-POPULAR_VIDEOS_URL = LRT_URL + 'data-service/module/media/callback/popular_media/order/viewsZ/date/7/limit/' + str(VIDEOS_COUNT_PER_PAGE)
-TVSHOW_VIDEOS_URL = LRT_URL + 'data-service/module/media/callback/popular_media/program/%d/limit/' + str(VIDEOS_COUNT_PER_PAGE)
-SEARCH_VIDEOS_URL = LRT_URL + 'data-service/module/media/callback/popular_media/order/dateZ/content/%s/limit/' + str(VIDEOS_COUNT_PER_PAGE)
+LATEST_NEWS_URL = LRT_URL + 'data-service/module/mediaNews/callback/top_media/startRow/%d/limit/' + str(VIDEOS_COUNT_PER_PAGE)
+LATEST_VIDEOS_URL = LRT_URL + 'data-service/module/media/callback/latest_media/startRow/%d/order/dateZ/limit/' + str(VIDEOS_COUNT_PER_PAGE)
+POPULAR_VIDEOS_URL = LRT_URL + 'data-service/module/media/callback/popular_media/startRow/%d/order/viewsZ/date/7/limit/' + str(VIDEOS_COUNT_PER_PAGE)
+TVSHOW_VIDEOS_URL = LRT_URL + 'data-service/module/media/callback/popular_media/program/%d/startRow/%d/limit/' + str(VIDEOS_COUNT_PER_PAGE)
+SEARCH_VIDEOS_URL = LRT_URL + 'data-service/module/media/callback/popular_media/order/dateZ/content/%s/startRow/%d/limit/' + str(VIDEOS_COUNT_PER_PAGE)
 
 reload(sys) 
 sys.setdefaultencoding('utf8')
@@ -115,9 +115,9 @@ def str_duration_to_int(duration):
   
   return int(parts[0])*3600+int(parts[1])*60+int(parts[2])
 
-def getLatestNews():
+def getLatestNews(startRow=0):
   
-  json = getLRTJSON(LATEST_NEWS_URL)
+  json = getLRTJSON(LATEST_NEWS_URL % startRow)
   
   result = {}
   result['startRow'] = json['startRow']
@@ -155,24 +155,24 @@ def getLatestNews():
   
   return result
 
-def getLatestVideos():
+def getLatestVideos(startRow=0):
   
-  json = getLRTJSON(LATEST_VIDEOS_URL)
+  json = getLRTJSON(LATEST_VIDEOS_URL % startRow)
   return parseStandartJSON(json)
 
-def getPopularVideos():
+def getPopularVideos(startRow=0):
   
-  json = getLRTJSON(POPULAR_VIDEOS_URL)
+  json = getLRTJSON(POPULAR_VIDEOS_URL % startRow)
   return parseStandartJSON(json)
 
-def getTVShowVideos(mediaId):
+def getTVShowVideos(mediaId, startRow=0):
   
-  json = getLRTJSON(TVSHOW_VIDEOS_URL % mediaId)  
+  json = getLRTJSON(TVSHOW_VIDEOS_URL % (mediaId, startRow))  
   return parseStandartJSON(json)
 
-def getSearchVideos(key):
+def getSearchVideos(key, startRow=0):
 
-  json = getLRTJSON(SEARCH_VIDEOS_URL % urllib.quote(key.encode("utf-8")))
+  json = getLRTJSON(SEARCH_VIDEOS_URL % (urllib.quote(key.encode("utf-8")), startRow))
   return parseStandartJSON(json)
 
 def parseStandartJSON(json):
