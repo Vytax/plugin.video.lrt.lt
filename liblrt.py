@@ -108,6 +108,8 @@ def getVideoStreamURL(url):
   return result
 
 def str_duration_to_int(duration):
+  if not duration:
+    return 0
   
   parts = duration.split(':')
   if not parts:
