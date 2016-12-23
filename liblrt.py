@@ -203,7 +203,7 @@ def parseStandartJSON(json):
     if data['date']:
       d['aired'] = data['date']
       
-    d['duration'] = str_duration_to_int(data['end']) - str_duration_to_int(data['start'])
+    #d['duration'] = str_duration_to_int(data['end']) - str_duration_to_int(data['start'])
     
     d['thumbnailURL'] = LRT_URL + '/mimages/Media/items/' + str(data['id']) + '/500/280'
     

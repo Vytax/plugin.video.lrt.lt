@@ -48,6 +48,10 @@ def test5():
 def test6():
   print "test6() Auksinis protas"
   print lrt.getTVShowVideos(92)
+  
+def test7():
+  print "test7()"
+  print lrt.getPopularVideos()
 
 if __name__ == '__main__':
   if len(sys.argv) > 1:
@@ -66,3 +70,5 @@ if __name__ == '__main__':
       test5()
     elif n == 6:
       test6()
+    elif n == 7:
+      test7()
