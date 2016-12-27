@@ -87,6 +87,10 @@ def build_mediateka_directory():
   listitem.setProperty('IsPlayable', 'false')
   xbmcplugin.addDirectoryItem(handle = int(sys.argv[1]), url = sys.argv[0] + '?mode=6', listitem = listitem, isFolder = True, totalItems = 0)
   
+  listitem = xbmcgui.ListItem("Grojaraščiai")
+  listitem.setProperty('IsPlayable', 'false')
+  xbmcplugin.addDirectoryItem(handle = int(sys.argv[1]), url = sys.argv[0] + '?mode=9', listitem = listitem, isFolder = True, totalItems = 0)
+  
   listitem = xbmcgui.ListItem("Paieška")
   listitem.setProperty('IsPlayable', 'false')
   xbmcplugin.addDirectoryItem(handle = int(sys.argv[1]), url = sys.argv[0] + '?mode=8', listitem = listitem, isFolder = True, totalItems = 0)
@@ -112,6 +116,8 @@ def build_media_list(mode, mediaId, startRow, searchKey):
       dialog = xbmcgui.Dialog()
       searchKey = dialog.input('Vaizdo įrašo paieška', type=xbmcgui.INPUT_ALPHANUM)
     data = lrt.getSearchVideos(searchKey, startRow)
+  elif mode == 11:
+    data = lrt.getPlaylist(mediaId)
     
   if data:
     tvList = data['data']
@@ -173,6 +179,34 @@ def build_tv_shows_list():
     listitem = xbmcgui.ListItem(tv['title'])
     listitem.setProperty('IsPlayable', 'false')
     xbmcplugin.addDirectoryItem(handle = int(sys.argv[1]), url = sys.argv[0] + '?mode=7&mediaId=' + tv['id'], listitem = listitem, isFolder = True, totalItems = 0)
+    
+  xbmcplugin.setContent(int( sys.argv[1] ), 'tvshows')
+  xbmc.executebuiltin('Container.SetViewMode(515)')
+  xbmcplugin.endOfDirectory(int(sys.argv[1]))
+  
+def build_playlists_groups_list():
+  
+  tvList = lrt.getPlaylistsGroups()
+  
+  for tv in tvList:
+    listitem = xbmcgui.ListItem(tv['title'])
+    listitem.setProperty('IsPlayable', 'false')    
+    xbmcplugin.addDirectoryItem(handle = int(sys.argv[1]), url = sys.argv[0] + '?mode=10&mediaId=' + str(tv['id']), listitem = listitem, isFolder = True, totalItems = 0)
+    
+  xbmcplugin.setContent(int( sys.argv[1] ), 'tvshows')
+  xbmc.executebuiltin('Container.SetViewMode(515)')
+  xbmcplugin.endOfDirectory(int(sys.argv[1]))
+  
+def build_playlists_list(mediaId):
+  
+  tvList = lrt.getPlaylists(mediaId)
+  
+  for tv in tvList:
+    listitem = xbmcgui.ListItem(tv['title'])
+    listitem.setProperty('IsPlayable', 'false')
+    listitem.setInfo(type = 'video', infoLabels = {'date': tv['date']})
+    listitem.setThumbnailImage(tv['thumbnailURL'])
+    xbmcplugin.addDirectoryItem(handle = int(sys.argv[1]), url = sys.argv[0] + '?mode=11&mediaId=' + str(tv['id']), listitem = listitem, isFolder = True, totalItems = 0)
     
   xbmcplugin.setContent(int( sys.argv[1] ), 'tvshows')
   xbmc.executebuiltin('Container.SetViewMode(515)')
@@ -240,8 +274,12 @@ elif mode == 1:
   playVideo(url, title)
 elif mode == 2:
   build_mediateka_directory()
-elif mode in [3, 4, 5, 7, 8]:
+elif mode in [3, 4, 5, 7, 8, 11]:
   build_media_list(mode, mediaId, startRow, searchKey)
 elif mode == 6:
   build_tv_shows_list()
-  
+elif mode == 9:
+  build_playlists_groups_list()
+elif mode == 10:
+  build_playlists_list(mediaId)
+    

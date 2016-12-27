@@ -52,6 +52,18 @@ def test6():
 def test7():
   print "test7()"
   print lrt.getPopularVideos()
+  
+def test8():
+  print "test8()"
+  print lrt.getPlaylistsGroups()
+  
+def test9():
+  print "test9()"
+  print lrt.getPlaylists(1)
+  
+def test10():
+  print "test10()"
+  print lrt.getPlaylist(1388)
 
 if __name__ == '__main__':
   if len(sys.argv) > 1:
@@ -72,3 +84,9 @@ if __name__ == '__main__':
       test6()
     elif n == 7:
       test7()
+    elif n == 8:
+      test8()
+    elif n == 9:
+      test9()
+    elif n == 10:
+      test10()

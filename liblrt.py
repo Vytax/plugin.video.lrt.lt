@@ -14,6 +14,9 @@ LATEST_VIDEOS_URL = LRT_URL + 'data-service/module/media/callback/latest_media/s
 POPULAR_VIDEOS_URL = LRT_URL + 'data-service/module/media/callback/popular_media/startRow/%d/order/viewsZ/date/7/limit/' + str(VIDEOS_COUNT_PER_PAGE)
 TVSHOW_VIDEOS_URL = LRT_URL + 'data-service/module/media/callback/popular_media/program/%d/startRow/%d/limit/' + str(VIDEOS_COUNT_PER_PAGE)
 SEARCH_VIDEOS_URL = LRT_URL + 'data-service/module/media/callback/popular_media/order/dateZ/content/%s/startRow/%d/limit/' + str(VIDEOS_COUNT_PER_PAGE)
+PLAYLISTS_URL = LRT_URL + 'data-service/module/play/callback/playlists_%d/category/%d/enable/true/count/0/limit/' + str(VIDEOS_COUNT_PER_PAGE)
+PLAYLIST_URL = LRT_URL
+PLAYLISTSGROUPS_URL = LRT_URL + 'mediateka/grojarasciai'
 
 reload(sys) 
 sys.setdefaultencoding('utf8')
@@ -243,3 +246,59 @@ def getTVShowsList():
     tvList.append(show)
     
   return tvList
+
+def getPlaylistsGroups():
+  
+  html = getURL(PLAYLISTSGROUPS_URL)
+  items = re.findall('<div class="blockTop blockTopSimple beforefilter">(.*?)</div>', html, re.DOTALL)
+  
+  tvList = []
+  
+  for i, item in enumerate(items):
+    tvList.append({'id': i+1, 'title': item })
+    
+  return tvList
+
+def getPlaylists(mediaId, startRow=0):
+  
+  json = getLRTJSON(PLAYLISTS_URL % (mediaId, mediaId))
+
+  if not json:
+    return []
+
+  tvList = []
+  for item in json['data']:
+    
+    tv = {}
+    tv['id'] = item['id']
+    tv['title'] = item['title']
+    tv['date'] = item['date']
+    tv['thumbnailURL'] = LRT_URL + 'mimages/PlayList/items/' + str(item['id']) + '/500/280'
+    
+    tvList.append(tv)
+    
+  return tvList
+
+def getPlaylist(mediaId):
+  
+  html = getURL(LRT_URL + 'mediateka/grojarasciai/id/' + str(mediaId))
+  
+  items = re.findall('<div class="playlist-scroll">.*?</div>', html, re.DOTALL)
+  if not items:
+    return []
+
+  tvList = []
+
+  items = re.findall('<img class="pl-rec-img" src="http://www.lrt.lt/mimages/Media/items/(\d+)/240/135/"  alt="([^"]*)"/>', items[0], re.DOTALL)
+  for i, title in items:
+    tv = {}
+    tv['title'] = title
+    tv['url'] = LRT_URL + 'mediateka/irasas/' + i
+    tv['thumbnailURL'] = LRT_URL + 'mimages/Media/items/' + i + '/500/280'
+    tv['plot'] = ''
+    tv['genre'] = ''
+    tvList.append(tv)
+    
+  return {'data': tvList, 'startRow': 1, 'totalRows': 1}
+    
+  
