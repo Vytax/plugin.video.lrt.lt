@@ -3,9 +3,13 @@
 
 import re
 import urllib
+import urllib2
 import sys
 
 import simplejson as json
+
+from StringIO import StringIO
+import gzip
 
 LRT_URL = 'http://www.lrt.lt/'
 VIDEOS_COUNT_PER_PAGE = 100 
@@ -35,8 +39,15 @@ def htmlUnescape(txt):
   
 def getURL(url):
   
-  res = urllib.urlopen(url)
-  return res.read()
+  request = urllib2.Request(url)
+  request.add_header('Accept-encoding', 'gzip')
+  response = urllib2.urlopen(request)
+  if response.info().get('Content-Encoding') == 'gzip':
+    buf = StringIO(response.read())
+    f = gzip.GzipFile(fileobj=buf)
+    return f.read()  
+  
+  return response.read()
 
 def getLiveURLs():
   
