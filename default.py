@@ -89,7 +89,11 @@ def build_mediateka_directory():
   
   listitem = xbmcgui.ListItem("Grojaraščiai")
   listitem.setProperty('IsPlayable', 'false')
-  xbmcplugin.addDirectoryItem(handle = int(sys.argv[1]), url = sys.argv[0] + '?mode=9', listitem = listitem, isFolder = True, totalItems = 0)
+  xbmcplugin.addDirectoryItem(handle = int(sys.argv[1]), url = sys.argv[0] + '?mode=9', listitem = listitem, isFolder = True, totalItems = 0)  
+  
+  listitem = xbmcgui.ListItem("Vaikams")
+  listitem.setProperty('IsPlayable', 'false')
+  xbmcplugin.addDirectoryItem(handle = int(sys.argv[1]), url = sys.argv[0] + '?mode=12', listitem = listitem, isFolder = True, totalItems = 0)  
   
   listitem = xbmcgui.ListItem("Paieška")
   listitem.setProperty('IsPlayable', 'false')
@@ -99,25 +103,31 @@ def build_mediateka_directory():
   xbmc.executebuiltin('Container.SetViewMode(515)')
   xbmcplugin.endOfDirectory(int(sys.argv[1]))
 
-def build_media_list(mode, mediaId, startRow, searchKey):
+def build_media_list(mode, **args):
   
   data = {}
   
+  searchKey = None
+  if 'searchKey' in args:
+    searchKey = args['searchKey']
+  
   if mode == 3:
-    data = lrt.getLatestNews(startRow) 
+    data = lrt.getLatestNews(args['startRow']) 
   elif mode == 4:
-    data = lrt.getLatestVideos(startRow)
+    data = lrt.getLatestVideos(args['startRow'])
   elif mode == 5:
-    data = lrt.getPopularVideos(startRow)
+    data = lrt.getPopularVideos(args['startRow'])
   elif mode == 7:
-    data = lrt.getTVShowVideos(mediaId, startRow)
+    data = lrt.getTVShowVideos(args['mediaId'], args['startRow'])
   elif mode == 8:
     if not searchKey:
       dialog = xbmcgui.Dialog()
       searchKey = dialog.input('Vaizdo įrašo paieška', type=xbmcgui.INPUT_ALPHANUM)
-    data = lrt.getSearchVideos(searchKey, startRow)
+    data = lrt.getSearchVideos(searchKey, args['startRow'])
   elif mode == 11:
-    data = lrt.getPlaylist(mediaId)
+    data = lrt.getPlaylist(args['mediaId'])
+  elif mode == 14:
+    data = lrt.getKidsVideoList(args['age'], args['mediaId'], args['startRow'])
     
   if data:
     tvList = data['data']
@@ -142,12 +152,20 @@ def build_media_list(mode, mediaId, startRow, searchKey):
       
       listitem.setThumbnailImage(tv['thumbnailURL'])
       
-      u = {}
-      u['mode'] = 1
-      u['url'] = tv['url']
-      u['title'] = tv['title']
+      url = ''
       
-      xbmcplugin.addDirectoryItem(handle = int(sys.argv[1]), url = sys.argv[0] + '?' + urllib.urlencode(u), listitem = listitem, isFolder = False, totalItems = 0)
+      if 'type' in tv:
+        if tv['type'] == 'youtube':
+          url = 'plugin://plugin.video.youtube/play/?video_id=' + tv['youtubeID']
+      
+      else:
+        u = {}
+        u['mode'] = 1
+        u['url'] = tv['url']
+        u['title'] = tv['title']
+        url = sys.argv[0] + '?' + urllib.urlencode(u)
+      
+      xbmcplugin.addDirectoryItem(handle = int(sys.argv[1]), url=url, listitem = listitem, isFolder = False, totalItems = 0)
     
     page = int(data['startRow'] / lrt.VIDEOS_COUNT_PER_PAGE) + 1
     pageCount = int( (data['totalRows'] - 1) / lrt.VIDEOS_COUNT_PER_PAGE) + 1
@@ -157,13 +175,16 @@ def build_media_list(mode, mediaId, startRow, searchKey):
       listitem.setProperty('IsPlayable', 'false')
       u = {}
       u['mode'] = mode
-      u['startRow'] = startRow + lrt.VIDEOS_COUNT_PER_PAGE
+      u['startRow'] = args['startRow'] + lrt.VIDEOS_COUNT_PER_PAGE
       
-      if mediaId:
-	u['mediaId'] = mediaId
+      if args['mediaId']:
+	u['mediaId'] = args['mediaId']
 	
       if searchKey:
 	u['searchKey'] = searchKey
+	
+      if 'age' in args:
+        u['url'] = args['age']
 	
       xbmcplugin.addDirectoryItem(handle = int(sys.argv[1]), url = sys.argv[0] + '?' + urllib.urlencode(u), listitem = listitem, isFolder = True, totalItems = 0)
   
@@ -211,6 +232,40 @@ def build_playlists_list(mediaId):
   xbmcplugin.setContent(int( sys.argv[1] ), 'tvshows')
   xbmc.executebuiltin('Container.SetViewMode(515)')
   xbmcplugin.endOfDirectory(int(sys.argv[1]))
+  
+def build_kids_age_list():
+  
+  tvList = lrt.getKidsAgeGroups()
+  
+  for tv in tvList:
+    listitem = xbmcgui.ListItem(tv['title'])
+    listitem.setProperty('IsPlayable', 'false')
+    xbmcplugin.addDirectoryItem(handle = int(sys.argv[1]), url = sys.argv[0] + '?mode=13&url=' + tv['id'], listitem = listitem, isFolder = True, totalItems = 0)
+    
+  xbmcplugin.setContent(int( sys.argv[1] ), 'tvshows')
+  xbmc.executebuiltin('Container.SetViewMode(515)')
+  xbmcplugin.endOfDirectory(int(sys.argv[1]))
+  
+def build_kids_cat_list(age, cat=None):
+  
+  tvList = lrt.getKidsCategory(age, cat)
+  
+  if not tvList:
+    xbmcplugin.endOfDirectory(int(sys.argv[1]))
+    return
+  
+  for tv in tvList:
+    listitem = xbmcgui.ListItem(tv['title'])
+    listitem.setProperty('IsPlayable', 'false')
+    listitem.setThumbnailImage(tv['thumbnailURL'])
+    mode = '13'
+    if tv['type'] == 'list':
+      mode = '14'
+    xbmcplugin.addDirectoryItem(handle = int(sys.argv[1]), url = sys.argv[0] + '?mode=' + mode + '&mediaId=' + str(tv['id']) + '&url=' + age, listitem = listitem, isFolder = True, totalItems = 0)
+    
+  xbmcplugin.setContent(int( sys.argv[1] ), 'tvshows')
+  xbmc.executebuiltin('Container.SetViewMode(515)')
+  xbmcplugin.endOfDirectory(int(sys.argv[1]))
 
 def playVideo(url, title):
   
@@ -225,8 +280,8 @@ def playVideo(url, title):
   listitem.setPath(u['url'])
   listitem.setThumbnailImage(u['image'])
   xbmcplugin.setResolvedUrl(handle = int(sys.argv[1]), succeeded = True, listitem = listitem)	
-  
- 
+
+
 # **************** main ****************
 
 path = sys.argv[0]
@@ -275,11 +330,17 @@ elif mode == 1:
 elif mode == 2:
   build_mediateka_directory()
 elif mode in [3, 4, 5, 7, 8, 11]:
-  build_media_list(mode, mediaId, startRow, searchKey)
+  build_media_list(mode, mediaId=mediaId, startRow=startRow, searchKey=searchKey)
 elif mode == 6:
   build_tv_shows_list()
 elif mode == 9:
   build_playlists_groups_list()
 elif mode == 10:
   build_playlists_list(mediaId)
+elif mode == 12:
+  build_kids_age_list()
+elif mode == 13:
+  build_kids_cat_list(url, mediaId)
+elif mode == 14:
+  build_media_list(mode, startRow=startRow, mediaId=mediaId, age=url) 
     

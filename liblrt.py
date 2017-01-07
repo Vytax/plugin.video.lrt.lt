@@ -11,6 +11,9 @@ import simplejson as json
 from StringIO import StringIO
 import gzip
 
+from HTMLParser import HTMLParser
+htmlParser = HTMLParser()
+
 LRT_URL = 'http://www.lrt.lt/'
 VIDEOS_COUNT_PER_PAGE = 100 
 LATEST_NEWS_URL = LRT_URL + 'data-service/module/mediaNews/callback/top_media/startRow/%d/limit/' + str(VIDEOS_COUNT_PER_PAGE)
@@ -21,6 +24,7 @@ SEARCH_VIDEOS_URL = LRT_URL + 'data-service/module/media/callback/popular_media/
 PLAYLISTS_URL = LRT_URL + 'data-service/module/play/callback/playlists_%d/category/%d/enable/true/count/0/limit/' + str(VIDEOS_COUNT_PER_PAGE)
 PLAYLIST_URL = LRT_URL
 PLAYLISTSGROUPS_URL = LRT_URL + 'mediateka/grojarasciai'
+KIDS_VIDEOS_URL = LRT_URL + 'data-service/module/kids/callback/load_media/category/%s/age/%s/startRow/%d/limit/' + str(VIDEOS_COUNT_PER_PAGE)
 
 reload(sys) 
 sys.setdefaultencoding('utf8')
@@ -162,7 +166,7 @@ def getLatestNews(startRow=0):
     if 'length' in data:
 	d['duration'] = str_duration_to_int(data['length'])
     
-    d['thumbnailURL'] = LRT_URL + '/mimages/News/images/' + str(data['newsId']) + '/500/280/size16x9'
+    d['thumbnailURL'] = LRT_URL + 'mimages/News/images/' + str(data['newsId']) + '/500/280/size16x9'
     d['url'] = LRT_URL + 'mediateka/irasas/' + str(data['id']) + '/lrt#wowzaplaystart=' + str(data['start']) + '&wowzaplayduration=' + str(data['end'])
     
     dataList.append(d)
@@ -312,4 +316,126 @@ def getPlaylist(mediaId):
     
   return {'data': tvList, 'startRow': 1, 'totalRows': 1}
     
+def getKidsAgeGroups():
+  
+  html = getURL(LRT_URL + 'vaikams')
+  
+  items = re.findall('<a class="[^"]*" href="http://www.lrt.lt/vaikams/([^"]*)"><br>([^<]*)</a>', html, re.DOTALL)
+  if not items:
+    return []
+  
+  tvList = []
+  
+  for i, item in enumerate(items):
+    tv = {}
+    tv['title'] = item[1]
+    tv['id'] = '%d:%s' % (i+1, item[0])
+    tvList.append(tv)
+  
+  return tvList
+
+def getKidsCategory(age, cat=None):
+  
+  age = age.split(':')
+  
+  url = LRT_URL + 'vaikams/' + age[1]
+  
+  if cat:
+    cat = str(cat)
+    url = url + '/' + cat
+  
+  html = getURL(url)
+  
+  jsonData = re.findall('GLOBAL\.kidsCategories = (\{.*?)</script>', html, re.DOTALL)
+  if not jsonData:
+    return None
+  
+  data = json.loads(jsonData[0])  
+  
+  parents = []
+  for i in data.keys():
+    v = data[i]
+    if v['parent']:
+      parents.append(v['parent'])
+  
+  items = []
+  for i in data.keys():
+    v = data[i]
+    if v['parent'] == cat and age[0] in v['age']:
+      tv = {}
+      tv['title'] = v['name']
+      tv['id'] = int(v['id'])
+      tv['thumbnailURL'] = LRT_URL + v['image']
+      if v['id'] in parents:
+        tv['type'] = 'cat'
+      else:
+        tv['type'] = 'list'
+      items.append(tv)
+  
+  return items
+
+def getKidsVideoList(age, cat, startRow=0):
+  
+  if not cat or not age:
+    return None
+  
+  age = age.split(':')
+  
+  jsonData = getLRTJSON(KIDS_VIDEOS_URL % (cat, age[0], startRow))
+  
+  if not jsonData:
+    return None
+  
+  result = {}
+  result['startRow'] = jsonData['startRow']
+  result['endRow'] = jsonData['endRow']
+  result['totalRows'] = jsonData['totalRows']
+  
+  dataList = []
+  
+  for data in jsonData['data']:
+    d = {}
+    
+    d['title'] = data['title']
+    
+    if data['content']:
+      d['plot'] = htmlParser.unescape(data['content']).replace('\t','').strip()
+    else:
+      d['plot'] = ''      
+      
+    if data['date']:
+      d['aired'] = data['date']
+      
+    d['genre'] = ''    
+    
+    dataType = int(data['type'])
+    
+    if dataType == 3:
+      
+      img = data['image']
+      
+      yid = re.findall('http:\/\/img\.youtube\.com\/vi\/([^\/]*)\/', img)      
+      if yid:
+        yid = yid[0]
+      else:
+        continue
+      
+      d['type'] = 'youtube'
+      d['youtubeID'] = yid
+      d['thumbnailURL'] = img
+      
+    elif dataType == 4:
+      
+      d['thumbnailURL'] = LRT_URL + data['image']
+    
+      d['url'] = LRT_URL + 'vaikams/%s/%s/%s' % (age[1], cat, data['id'])
+    
+    else:
+      continue
+      
+    dataList.append(d)
+  
+  result['data'] = dataList
+  
+  return result
   

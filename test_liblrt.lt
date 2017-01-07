@@ -40,6 +40,7 @@ def test4():
   print "test4()"
   print lrt.getVideoStreamURL('http://www.lrt.lt/mediateka/irasas/84760/lrt#wowzaplaystart=695000&wowzaplayduration=187000')
   print lrt.getVideoStreamURL('http://www.lrt.lt/mediateka/tiesiogiai/lrt-televizija')
+  print lrt.getVideoStreamURL('http://www.lrt.lt/vaikams/ikimokyklinukams/25/4984')
 
 def test5():
   print "test5()"
