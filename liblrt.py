@@ -29,18 +29,32 @@ KIDS_VIDEOS_URL = LRT_URL + 'data-service/module/kids/callback/load_media/catego
 reload(sys) 
 sys.setdefaultencoding('utf8')
 
-def htmlUnescape(txt):
-  if sys.version_info < (3, 0):
-    import HTMLParser
-    return HTMLParser.HTMLParser().unescape(txt)
-  
-  if sys.version_info < (3, 4):
-    import html.parser    
-    return html.parser.HTMLParser().unescape(txt)
-  
-  import html
-  return html.unescape(txt)
-  
+import htmlentitydefs
+
+class HTMLTextExtractor(HTMLParser):
+  def __init__(self):
+    HTMLParser.__init__(self)
+    self.result = [ ]
+
+  def handle_data(self, d):
+    self.result.append(d)
+
+  def handle_charref(self, number):
+    codepoint = int(number[1:], 16) if number[0] in (u'x', u'X') else int(number)
+    self.result.append(unichr(codepoint))
+
+  def handle_entityref(self, name):
+    codepoint = htmlentitydefs.name2codepoint[name]
+    self.result.append(unichr(codepoint))
+
+  def get_text(self):
+    return u''.join(self.result)
+
+def html_to_text(html):
+    s = HTMLTextExtractor()
+    s.feed(html)
+    return s.get_text()
+
 def getURL(url):
   
   request = urllib2.Request(url)
@@ -74,19 +88,31 @@ def getLiveURLs():
     if not link:
       continue
     
-    liveURL['url'] = LRT_URL + link[0]
+    link = link[0]
     
-    name = re.findall('<span class="channelName">(.*?)</span>', li_item, re.DOTALL)    
-    if name:
-      liveURL['name'] = htmlUnescape(name[0]).replace('·','').strip()
-
+    if link.startswith('http://'):
+      liveURL['url'] = link
+    else:
+      liveURL['url'] = LRT_URL + link
+    
     now = re.findall('<span class="now">(.*?)</span>', li_item, re.DOTALL)
     if now:
-      liveURL['nowPlaying'] = now[0].strip()
+      liveURL['nowPlaying'] = html_to_text(now[0]).strip()
+      
+    name = re.findall('<span class="channelName">(.*?)</span>', li_item, re.DOTALL)    
+    if name:
+      liveURL['name'] = htmlParser.unescape(name[0]).replace('·','').strip()
+    else:
+      if now:
+        liveURL['name'] = liveURL['nowPlaying']
+      else:
+        liveURL['name'] = 'LRT'
       
     contentType = re.findall('<span class="(video|audio)"></span>', li_item, re.DOTALL)
     if contentType:
       liveURL['contentType'] = contentType[0]
+    else:
+      liveURL['contentType'] = 'video'
     
     if liveURL:
       liveURLs.append(liveURL)
