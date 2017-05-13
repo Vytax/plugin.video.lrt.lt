@@ -69,7 +69,7 @@ def getURL(url):
 
 def getLiveURLs():
   
-  html = getURL(LRT_URL); 
+  html = getURL(LRT_URL + 'pradzia'); 
   aside = re.findall('<aside class="right-off-canvas-menu">(.*?)</aside>', html, re.DOTALL)
   
   if not aside: 
